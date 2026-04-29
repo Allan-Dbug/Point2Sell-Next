@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../supabase";
 
-
 export default function Checkout() {
   const router = useRouter();
   const [carrito, setCarrito] = useState([]);
@@ -15,7 +14,7 @@ export default function Checkout() {
   }, []);
 
   const obtenerPrecio = (precio) => {
-    return Number(precio.replace("$", "").replace(",", ""));
+    return Number(String(precio).replace("$", "").replace(",", ""));
   };
 
   const subtotal = carrito.reduce(
@@ -24,29 +23,43 @@ export default function Checkout() {
   );
 
   const finalizarCompra = async () => {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (!user) {
-    alert("Debes iniciar sesión");
-    router.push("/login");
-    return;
-  }
+    if (!user) {
+      alert("Debes iniciar sesión para comprar");
+      router.push("/login");
+      return;
+    }
 
-  for (const item of carrito) {
-    await supabase.from("compras").insert([
-      {
-        usuario_id: user.id,
-        producto_nombre: item.nombre,
-        precio: item.precio,
-      },
-    ]);
-  }
+    if (carrito.length === 0) {
+      alert("Tu carrito está vacío");
+      return;
+    }
 
-  localStorage.removeItem("carrito");
-  router.push("/ticket");
-};
+    for (const item of carrito) {
+      const precioLimpio = obtenerPrecio(item.precio);
+
+      const { error } = await supabase.from("compras").insert([
+        {
+          usuario_id: user.id,
+          producto_nombre: item.nombre,
+          precio: precioLimpio,
+          total: precioLimpio * item.cantidad,
+          estado: "completado",
+        },
+      ]);
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+    }
+
+    localStorage.removeItem("carrito");
+    router.push("/ticket");
+  };
 
   return (
     <div style={page}>
