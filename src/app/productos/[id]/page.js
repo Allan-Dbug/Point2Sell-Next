@@ -10,6 +10,36 @@ export default function ProductoDetalle() {
 
   const [producto, setProducto] = useState(null);
 
+  const agregarAlCarrito = () => {
+  const carritoActual = JSON.parse(localStorage.getItem("carrito")) || [];
+
+  const existe = carritoActual.find((item) => item.id === producto.id);
+
+  let nuevoCarrito;
+
+  if (existe) {
+    nuevoCarrito = carritoActual.map((item) =>
+      item.id === producto.id
+        ? { ...item, cantidad: item.cantidad + 1 }
+        : item
+    );
+  } else {
+    nuevoCarrito = [
+      ...carritoActual,
+      {
+        id: producto.id,
+        nombre: producto.nombre,
+        precio: `$${producto.precio}`,
+        imagen: producto.imagen,
+        cantidad: 1,
+      },
+    ];
+  }
+
+  localStorage.setItem("carrito", JSON.stringify(nuevoCarrito));
+  alert("Producto agregado al carrito");
+};
+
   useEffect(() => {
     obtenerProducto();
   }, []);
@@ -83,18 +113,19 @@ export default function ProductoDetalle() {
           </p>
 
           <button
-            style={{
-              marginTop: "30px",
-              background: "#111827",
-              color: "white",
-              border: "none",
-              padding: "15px 25px",
-              borderRadius: "10px",
-              cursor: "pointer",
-            }}
-          >
-            Agregar al carrito
-          </button>
+  onClick={agregarAlCarrito}
+  style={{
+    marginTop: "30px",
+    background: "#111827",
+    color: "white",
+    border: "none",
+    padding: "15px 25px",
+    borderRadius: "10px",
+    cursor: "pointer",
+  }}
+>
+  Agregar al carrito
+</button>
         </div>
       </div>
     </main>
